@@ -39,6 +39,7 @@ import {
   getRooms,
   getContainers,
   importItemsCSV,
+  uploadItemPhotos,
 } from '@/api'
 import type { Item, Category, House, Room, Container, ImportResult } from '@/types'
 import { formatDate, buildCategoryCascadeOptions, buildSpaceCascadeOptions } from '@/utils/common'
@@ -63,6 +64,7 @@ const ItemManagement = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [modalType, setModalType] = useState<'add' | 'edit'>('add')
   const [editingItem, setEditingItem] = useState<Item | null>(null)
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([])
   const [form] = Form.useForm<FormValues>()
 
   const [categories, setCategories] = useState<Category[]>([])
@@ -130,6 +132,7 @@ const ItemManagement = () => {
   const openAddModal = () => {
     setModalType('add')
     setEditingItem(null)
+    setPendingPhotos([])
     form.resetFields()
     form.setFieldsValue({ quantity: 1 })
     setModalVisible(true)
@@ -197,14 +200,27 @@ const ItemManagement = () => {
         photos: values.photos,
       }
 
+      let savedItem: Item | null = null
+
       if (modalType === 'add') {
-        await createItem(itemData)
+        savedItem = await createItem(itemData)
         message.success('创建成功')
+
+        if (pendingPhotos.length > 0 && savedItem?.id) {
+          try {
+            await uploadItemPhotos(savedItem.id, pendingPhotos)
+            message.success('照片上传成功')
+          } catch (uploadError) {
+            console.error('Photo upload failed:', uploadError)
+            message.warning('物品创建成功，但照片上传失败，请稍后在编辑中重新上传')
+          }
+        }
       } else if (modalType === 'edit' && editingItem) {
         await updateItem(editingItem.id, itemData)
         message.success('更新成功')
       }
 
+      setPendingPhotos([])
       setModalVisible(false)
       loadData(pagination.current, pagination.pageSize)
     } catch (error) {
@@ -214,7 +230,7 @@ const ItemManagement = () => {
 
   const handleDownloadTemplate = async () => {
     try {
-      const templateContent = '名称,数量,分类,房屋,房间,容器,购入日期(YYYY-MM-DD),保质期(YYYY-MM-DD)\n示例物品,1,食品,我的家,厨房,冰箱,2024-01-01,2024-12-31'
+      const templateContent = '名称,数量,分类,购入日期,保质期,所属容器\n示例物品,1,食品,2024-01-01,2024-12-31,冰箱'
       const blob = new Blob(['\ufeff' + templateContent], { type: 'text/csv;charset=utf-8;' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -416,7 +432,11 @@ const ItemManagement = () => {
           </Space>
 
           <Form.Item name="photos" label="照片">
-            <PhotoUpload itemId={editingItem?.id} disabled={modalType === 'add'} />
+            <PhotoUpload
+              itemId={editingItem?.id}
+              disabled={false}
+              onFilesSelect={modalType === 'add' ? setPendingPhotos : undefined}
+            />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>

@@ -24,16 +24,26 @@ const SpaceManagement = () => {
 
     setLoading(true)
     try {
-      let containerId: string | undefined
-      if (node.type === 'container') {
-        containerId = node.id
-      }
-
-      const result = await getItems({
+      const params: {
+        page: number
+        page_size: number
+        container_id?: string
+        room_id?: string
+        house_id?: string
+      } = {
         page,
         page_size: pageSize,
-        container_id: containerId,
-      })
+      }
+
+      if (node.type === 'container') {
+        params.container_id = node.id
+      } else if (node.type === 'room') {
+        params.room_id = node.id
+      } else if (node.type === 'house') {
+        params.house_id = node.id
+      }
+
+      const result = await getItems(params)
       setItems(result.items)
       setPagination({
         current: page,

@@ -15,7 +15,7 @@ import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import CategoryTree from '@/components/CategoryTree'
 import ItemCard from '@/components/ItemCard'
-import { searchItems, getIdleItems, toggleItemIdle } from '@/api'
+import { searchItems, toggleItemIdle } from '@/api'
 import type { Item } from '@/types'
 
 const SearchPage = () => {
@@ -28,17 +28,17 @@ const SearchPage = () => {
   const loadData = async () => {
     setLoading(true)
     try {
-      let result: Item[]
-      if (keyword.trim()) {
-        result = await searchItems({ name: keyword.trim() })
-      } else if (selectedCategoryId) {
-        result = await getIdleItems(selectedCategoryId)
-      } else {
-        result = []
-      }
+      let result: Item[] = []
 
-      if (selectedCategoryId) {
-        result = result.filter((item) => item.category_id === selectedCategoryId)
+      if (keyword.trim() || selectedCategoryId) {
+        const params: { search?: string; category_id?: string } = {}
+        if (keyword.trim()) {
+          params.search = keyword.trim()
+        }
+        if (selectedCategoryId) {
+          params.category_id = selectedCategoryId
+        }
+        result = await searchItems(params)
       }
 
       setItems(result)

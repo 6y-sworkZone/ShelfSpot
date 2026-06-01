@@ -27,22 +27,27 @@ import type { MovingSummary } from '@/types'
 
 const MovingList = () => {
   const [checkedContainerIds, setCheckedContainerIds] = useState<string[]>([])
+  const [checkedRoomIds, setCheckedRoomIds] = useState<string[]>([])
   const [summary, setSummary] = useState<MovingSummary | null>(null)
   const [generating, setGenerating] = useState(false)
 
-  const handleCheck = (containerIds: string[]) => {
-    setCheckedContainerIds(containerIds)
+  const handleCheck = (checked: { container_ids: string[]; room_ids: string[] }) => {
+    setCheckedContainerIds(checked.container_ids)
+    setCheckedRoomIds(checked.room_ids)
   }
 
   const handleGenerate = async () => {
-    if (checkedContainerIds.length === 0) {
-      message.warning('请先在左侧选择要搬家的容器')
+    if (checkedContainerIds.length === 0 && checkedRoomIds.length === 0) {
+      message.warning('请先在左侧选择要搬家的房间或容器')
       return
     }
 
     setGenerating(true)
     try {
-      const data = await generateMovingList({ container_ids: checkedContainerIds })
+      const data = await generateMovingList({
+        container_ids: checkedContainerIds,
+        room_ids: checkedRoomIds,
+      })
       setSummary(data)
       message.success('清单生成成功')
     } catch (error) {
@@ -53,13 +58,16 @@ const MovingList = () => {
   }
 
   const handleExportCSV = async () => {
-    if (checkedContainerIds.length === 0) {
-      message.warning('请先在左侧选择要搬家的容器')
+    if (checkedContainerIds.length === 0 && checkedRoomIds.length === 0) {
+      message.warning('请先在左侧选择要搬家的房间或容器')
       return
     }
 
     try {
-      const blob = await exportMovingListCSV({ container_ids: checkedContainerIds })
+      const blob = await exportMovingListCSV({
+        container_ids: checkedContainerIds,
+        room_ids: checkedRoomIds,
+      })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -142,8 +150,8 @@ const MovingList = () => {
         <div style={{ marginTop: 16 }}>
           <Alert
             message="已选择"
-            description={`${checkedContainerIds.length} 个容器`}
-            type={checkedContainerIds.length > 0 ? 'success' : 'info'}
+            description={`${checkedRoomIds.length} 个房间，${checkedContainerIds.length} 个容器`}
+            type={checkedRoomIds.length > 0 || checkedContainerIds.length > 0 ? 'success' : 'info'}
             showIcon
           />
         </div>
@@ -168,7 +176,7 @@ const MovingList = () => {
               icon={<CheckCircleOutlined />}
               onClick={handleGenerate}
               loading={generating}
-              disabled={checkedContainerIds.length === 0}
+              disabled={checkedContainerIds.length === 0 && checkedRoomIds.length === 0}
             >
               生成清单
             </Button>

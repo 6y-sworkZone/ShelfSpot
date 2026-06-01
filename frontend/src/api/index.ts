@@ -211,7 +211,7 @@ export const deleteItem = (id: string) => {
   }) as Promise<void>
 }
 
-export const searchItems = (params: { name?: string; category_id?: string }) => {
+export const searchItems = (params: { name?: string; category_id?: string; search?: string }) => {
   return request<unknown, Item[]>('/items/search', {
     params,
   }) as Promise<Item[]>

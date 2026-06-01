@@ -8,11 +8,12 @@ interface PhotoUploadProps {
   itemId?: string
   value?: string[]
   onChange?: (urls: string[]) => void
+  onFilesSelect?: (files: File[]) => void
   maxCount?: number
   disabled?: boolean
 }
 
-const PhotoUpload = ({ itemId, value = [], onChange, maxCount = 3, disabled = false }: PhotoUploadProps) => {
+const PhotoUpload = ({ itemId, value = [], onChange, onFilesSelect, maxCount = 3, disabled = false }: PhotoUploadProps) => {
   const [previewVisible, setPreviewVisible] = useState(false)
   const [previewImage, setPreviewImage] = useState('')
   const [fileList, setFileList] = useState<UploadFile[]>([])
@@ -33,13 +34,23 @@ const PhotoUpload = ({ itemId, value = [], onChange, maxCount = 3, disabled = fa
     setFileList(newFileList)
     const urls = newFileList.filter((f) => f.status === 'done').map((f) => f.url || f.response?.url)
     onChange?.(urls)
+
+    const pendingFiles = newFileList
+      .filter((f) => f.status === 'uploading' || f.status === 'done')
+      .map((f) => f.originFileObj as File)
+      .filter(Boolean)
+    onFilesSelect?.(pendingFiles)
   }
 
   const handleUpload: UploadProps['customRequest'] = async ({ file, onSuccess, onError }) => {
     try {
       if (!itemId) {
-        message.error('请先保存物品后再上传照片')
-        onError?.(new Error('物品ID不存在'))
+        if (onFilesSelect) {
+          onSuccess?.({}, file as File)
+        } else {
+          message.error('请先保存物品后再上传照片')
+          onError?.(new Error('物品ID不存在'))
+        }
         return
       }
       const result = await uploadItemPhotos(itemId, [file as File])

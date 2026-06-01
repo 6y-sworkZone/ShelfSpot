@@ -217,9 +217,14 @@ const Dashboard = () => {
           <Card>
             <Statistic
               title="紧急提醒"
-              value={stats?.room_stats?.reduce((sum, r) => sum + r.count, 0) || 0}
+              value={(stats?.expired_count || 0) + (stats?.urgent_count || 0)}
               prefix={<WarningOutlined />}
               valueStyle={{ color: '#faad14' }}
+              suffix={
+                <span style={{ fontSize: 12, marginLeft: 8 }}>
+                  已过期 {stats?.expired_count || 0}，即将过期 {stats?.urgent_count || 0}
+                </span>
+              }
             />
           </Card>
         </Col>

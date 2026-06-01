@@ -29,7 +29,7 @@ import { buildSpaceTree } from '@/utils/common'
 interface SpaceTreeProps {
   onSelect?: (node: TreeItem | null) => void
   showCheckbox?: boolean
-  onCheck?: (checkedContainerIds: string[]) => void
+  onCheck?: (checked: { container_ids: string[]; room_ids: string[] }) => void
 }
 
 interface FormValues {
@@ -279,20 +279,24 @@ const SpaceTree = ({ onSelect, showCheckbox = false, onCheck }: SpaceTreeProps) 
     if (!onCheck) return
 
     const containerIds: string[] = []
-    const collectContainers = (items: TreeItem[]) => {
+    const roomIds: string[] = []
+    const collectIds = (items: TreeItem[]) => {
       for (const item of items) {
         if (item.type === 'container' && checkedKeys.checked.includes(item.key)) {
           containerIds.push(item.id)
         }
+        if (item.type === 'room' && checkedKeys.checked.includes(item.key)) {
+          roomIds.push(item.id)
+        }
         if (item.children) {
-          collectContainers(item.children)
+          collectIds(item.children)
         }
       }
     }
 
     const treeItems = buildSpaceTree(houses, rooms, containers)
-    collectContainers(treeItems)
-    onCheck(containerIds)
+    collectIds(treeItems)
+    onCheck({ container_ids: containerIds, room_ids: roomIds })
   }
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {

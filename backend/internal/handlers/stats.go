@@ -4,6 +4,7 @@ import (
 	"shelfspot-backend/internal/database"
 	"shelfspot-backend/internal/models"
 	"shelfspot-backend/internal/utils"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +13,8 @@ type StatsResponse struct {
 	TotalItems       int64                    `json:"total_items"`
 	IdleCount        int64                    `json:"idle_count"`
 	IdleRate         float64                  `json:"idle_rate"`
+	ExpiredCount     int64                    `json:"expired_count"`
+	UrgentCount      int64                    `json:"urgent_count"`
 	CategoryStats    []CategoryStat           `json:"category_stats"`
 	HouseStats       []SpaceStat              `json:"house_stats"`
 	RoomStats        []SpaceStat              `json:"room_stats"`
@@ -122,10 +125,25 @@ func (h *StatsHandler) GetOverview(c *gin.Context) {
 		roomStats = make([]SpaceStat, 0)
 	}
 
+	now := time.Now()
+	thirtyDaysLater := now.AddDate(0, 0, 30)
+
+	var expiredCount int64
+	database.GetDB().Model(&models.Item{}).
+		Where("expiry_date IS NOT NULL AND expiry_date < ? AND is_expiry_handled = ?", now, false).
+		Count(&expiredCount)
+
+	var urgentCount int64
+	database.GetDB().Model(&models.Item{}).
+		Where("expiry_date IS NOT NULL AND expiry_date >= ? AND expiry_date <= ? AND is_expiry_handled = ?", now, thirtyDaysLater, false).
+		Count(&urgentCount)
+
 	stats := StatsResponse{
 		TotalItems:    totalItems,
 		IdleCount:     idleCount,
 		IdleRate:      idleRate,
+		ExpiredCount:  expiredCount,
+		UrgentCount:   urgentCount,
 		CategoryStats: categoryStats,
 		HouseStats:    houseStats,
 		RoomStats:     roomStats,

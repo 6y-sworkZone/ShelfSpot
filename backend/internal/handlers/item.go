@@ -134,11 +134,18 @@ func (h *ItemHandler) List(c *gin.Context) {
 func (h *ItemHandler) Search(c *gin.Context) {
 	name := c.Query("name")
 	categoryID := c.Query("category_id")
+	search := c.Query("search")
 
 	db := database.GetDB().Preload("Category").Preload("Container.Room.House").Order("created_at DESC")
 
 	if name != "" {
 		db = db.Where("name LIKE ?", "%"+name+"%")
+	}
+
+	if search != "" {
+		subQuery := database.GetDB().Model(&models.Category{}).
+			Select("id").Where("name LIKE ?", "%"+search+"%")
+		db = db.Where("name LIKE ? OR category_id IN (?)", "%"+search+"%", subQuery)
 	}
 
 	if categoryID != "" {
