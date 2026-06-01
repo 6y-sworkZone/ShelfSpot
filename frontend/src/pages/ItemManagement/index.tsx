@@ -25,7 +25,7 @@ import {
   DownloadOutlined,
   ReloadOutlined,
 } from '@ant-design/icons'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import PhotoUpload from '@/components/PhotoUpload'
 import PathDisplay from '@/components/PathDisplay'
 import {
@@ -57,6 +57,7 @@ interface FormValues {
 }
 
 const ItemManagement = () => {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
@@ -210,21 +211,56 @@ const ItemManagement = () => {
           try {
             await uploadItemPhotos(savedItem.id, pendingPhotos)
             message.success('照片上传成功')
+            setPendingPhotos([])
+            setModalVisible(false)
+            loadData(pagination.current, pagination.pageSize)
           } catch (uploadError) {
             console.error('Photo upload failed:', uploadError)
-            message.warning('物品创建成功，但照片上传失败，请稍后在编辑中重新上传')
+            Modal.confirm({
+              title: '照片上传失败',
+              content: (
+                <div>
+                  <p>物品已创建成功，但 {pendingPhotos.length} 张照片上传失败。</p>
+                  <p style={{ margin: 0 }}>您可以：</p>
+                  <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+                    <li>点击"稍后处理"，在物品列表中编辑时重新上传</li>
+                    <li>点击"立即重试"，直接进入编辑模式上传照片</li>
+                  </ul>
+                </div>
+              ),
+              okText: '立即重试',
+              cancelText: '稍后处理',
+              onOk: () => {
+                setPendingPhotos([])
+                setModalVisible(false)
+                if (savedItem?.id) {
+                  navigate(`/items?edit=${savedItem.id}`)
+                }
+                loadData(pagination.current, pagination.pageSize)
+              },
+              onCancel: () => {
+                setPendingPhotos([])
+                setModalVisible(false)
+                loadData(pagination.current, pagination.pageSize)
+              },
+            })
+            return
           }
+        } else {
+          setPendingPhotos([])
+          setModalVisible(false)
+          loadData(pagination.current, pagination.pageSize)
         }
       } else if (modalType === 'edit' && editingItem) {
         await updateItem(editingItem.id, itemData)
         message.success('更新成功')
+        setPendingPhotos([])
+        setModalVisible(false)
+        loadData(pagination.current, pagination.pageSize)
       }
-
-      setPendingPhotos([])
-      setModalVisible(false)
-      loadData(pagination.current, pagination.pageSize)
     } catch (error) {
       console.error('Form submit failed:', error)
+      message.error(modalType === 'add' ? '创建失败，请重试' : '更新失败，请重试')
     }
   }
 

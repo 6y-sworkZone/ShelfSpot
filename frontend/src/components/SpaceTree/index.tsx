@@ -8,6 +8,7 @@ import {
   HomeOutlined,
   ApartmentOutlined,
   InboxOutlined,
+  MoreOutlined,
 } from '@ant-design/icons'
 import {
   getHouses,
@@ -93,14 +94,40 @@ const SpaceTree = ({ onSelect, showCheckbox = false, onCheck }: SpaceTreeProps) 
     const mapItem = (item: TreeItem): TreeDataNode => ({
       key: item.key,
       title: (
-        <span
-          onContextMenu={(e) => {
-            e.preventDefault()
-            setContextMenu({ visible: true, x: e.clientX, y: e.clientY, node: item })
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
           }}
         >
-          {item.title}
-        </span>
+          <span
+            onContextMenu={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setContextMenu({ visible: true, x: e.clientX, y: e.clientY, node: item })
+            }}
+            style={{ flex: 1 }}
+          >
+            {item.title}
+          </span>
+          <Dropdown
+            menu={{ items: getMenuItems(item) }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={<MoreOutlined />}
+              onClick={(e) => {
+                e.stopPropagation()
+              }}
+              style={{ padding: '0 4px' }}
+            />
+          </Dropdown>
+        </div>
       ),
       icon: iconMap[item.type],
       isLeaf: item.isLeaf,
@@ -390,16 +417,30 @@ const SpaceTree = ({ onSelect, showCheckbox = false, onCheck }: SpaceTreeProps) 
         </Form>
       </Modal>
 
-      {!showCheckbox && (
-        <div style={{ marginTop: 16, padding: 12, background: '#f5f5f5', borderRadius: 8 }}>
-          <p style={{ margin: 0, color: '#888', fontSize: 12 }}>
-            💡 右键点击节点可进行新增、编辑、删除操作
+      <div
+        style={{
+          marginTop: 16,
+          padding: 12,
+          background: '#f0f5ff',
+          borderRadius: 8,
+          border: '1px dashed #91caff',
+        }}
+      >
+        <Button
+          type="primary"
+          block
+          icon={<PlusOutlined />}
+          onClick={() => openAddModal('house', null)}
+          style={{ marginBottom: 12 }}
+        >
+          新增房屋
+        </Button>
+        {!showCheckbox && (
+          <p style={{ margin: 0, color: '#666', fontSize: 12, textAlign: 'center' }}>
+            💡 点击节点右侧的 ··· 按钮可进行更多操作
           </p>
-          <p style={{ margin: '4px 0 0 0', color: '#888', fontSize: 12 }}>
-            空白处右键可新增房屋
-          </p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

@@ -106,6 +106,9 @@ export interface StatsOverview {
   total_items: number
   idle_count: number
   idle_rate: number
+  total_quantity: number
+  idle_quantity: number
+  idle_rate_by_quantity: number
   expired_count: number
   urgent_count: number
   category_stats: { id: string; name: string; count: number; ratio: number }[]

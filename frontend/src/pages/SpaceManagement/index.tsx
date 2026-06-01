@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react'
-import { Card, Table, Button, Tag, Space, message, Spin, Empty, Modal } from 'antd'
+import { Card, Table, Button, Tag, Space, message, Spin, Empty, Modal, Alert } from 'antd'
 import { EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import SpaceTree from '@/components/SpaceTree'
 import PathDisplay from '@/components/PathDisplay'
-import { getItems, deleteItem } from '@/api'
+import { getItems, deleteItem, getHouses, getRooms, getContainers } from '@/api'
 import type { Item, TreeItem } from '@/types'
-import { formatDate } from '@/utils/common'
+import { formatDate, buildSpaceTree } from '@/utils/common'
 
 const SpaceManagement = () => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [selectedNode, setSelectedNode] = useState<TreeItem | null>(null)
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const [navigatedFromPath, setNavigatedFromPath] = useState(false)
 
   const loadItems = async (node: TreeItem | null, page = 1, pageSize = 10) => {
     if (!node) {
@@ -58,12 +60,59 @@ const SpaceManagement = () => {
   }
 
   useEffect(() => {
+    const type = searchParams.get('type')
+    const id = searchParams.get('id')
+
+    if (type && id) {
+      setNavigatedFromPath(true)
+      const findNodeAndSelect = async () => {
+        try {
+          const [houses, rooms, containers] = await Promise.all([
+            getHouses(),
+            getRooms(),
+            getContainers(),
+          ])
+          const treeItems = buildSpaceTree(houses, rooms, containers)
+          
+          const findNode = (items: TreeItem[], targetType: string, targetId: string): TreeItem | null => {
+            for (const item of items) {
+              if (item.type === targetType && item.id === targetId) {
+                return item
+              }
+              if (item.children) {
+                const found = findNode(item.children, targetType, targetId)
+                if (found) return found
+              }
+            }
+            return null
+          }
+          
+          const node = findNode(treeItems, type, id)
+          if (node) {
+            setSelectedNode(node)
+          }
+        } catch (error) {
+          console.error('Failed to find node:', error)
+        }
+      }
+      findNodeAndSelect()
+    }
+  }, [searchParams])
+
+  useEffect(() => {
     loadItems(selectedNode, pagination.current, pagination.pageSize)
   }, [selectedNode])
 
   const handleNodeSelect = (node: TreeItem | null) => {
     setSelectedNode(node)
+    setNavigatedFromPath(false)
     setPagination((prev) => ({ ...prev, current: 1 }))
+  }
+
+  const handleClearNavigatedState = () => {
+    setSearchParams({})
+    setNavigatedFromPath(false)
+    setSelectedNode(null)
   }
 
   const handleTableChange = (page: number, pageSize: number) => {
@@ -195,6 +244,16 @@ const SpaceManagement = () => {
         }
         style={{ flex: 1 }}
       >
+        {navigatedFromPath && (
+          <Alert
+            message="已自动定位到对应空间节点"
+            type="info"
+            showIcon
+            closable
+            onClose={handleClearNavigatedState}
+            style={{ marginBottom: 16 }}
+          />
+        )}
         <Spin spinning={loading}>
           {selectedNode ? (
             <Table

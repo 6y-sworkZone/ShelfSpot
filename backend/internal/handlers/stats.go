@@ -13,6 +13,9 @@ type StatsResponse struct {
 	TotalItems       int64                    `json:"total_items"`
 	IdleCount        int64                    `json:"idle_count"`
 	IdleRate         float64                  `json:"idle_rate"`
+	TotalQuantity    int64                    `json:"total_quantity"`
+	IdleQuantity     int64                    `json:"idle_quantity"`
+	IdleRateByQuantity float64              `json:"idle_rate_by_quantity"`
 	ExpiredCount     int64                    `json:"expired_count"`
 	UrgentCount      int64                    `json:"urgent_count"`
 	CategoryStats    []CategoryStat           `json:"category_stats"`
@@ -51,6 +54,22 @@ func (h *StatsHandler) GetOverview(c *gin.Context) {
 	idleRate := 0.0
 	if totalItems > 0 {
 		idleRate = float64(idleCount) / float64(totalItems) * 100
+	}
+
+	type sumResult struct {
+		Total int64
+	}
+	var totalQtyResult sumResult
+	var idleQtyResult sumResult
+
+	database.GetDB().Model(&models.Item{}).Select("IFNULL(SUM(quantity), 0) as total").Scan(&totalQtyResult)
+	database.GetDB().Model(&models.Item{}).Where("is_idle = ?", true).Select("IFNULL(SUM(quantity), 0) as total").Scan(&idleQtyResult)
+
+	totalQuantity := totalQtyResult.Total
+	idleQuantity := idleQtyResult.Total
+	idleRateByQuantity := 0.0
+	if totalQuantity > 0 {
+		idleRateByQuantity = float64(idleQuantity) / float64(totalQuantity) * 100
 	}
 
 	var categories []models.Category
@@ -139,14 +158,17 @@ func (h *StatsHandler) GetOverview(c *gin.Context) {
 		Count(&urgentCount)
 
 	stats := StatsResponse{
-		TotalItems:    totalItems,
-		IdleCount:     idleCount,
-		IdleRate:      idleRate,
-		ExpiredCount:  expiredCount,
-		UrgentCount:   urgentCount,
-		CategoryStats: categoryStats,
-		HouseStats:    houseStats,
-		RoomStats:     roomStats,
+		TotalItems:       totalItems,
+		IdleCount:        idleCount,
+		IdleRate:         idleRate,
+		TotalQuantity:    totalQuantity,
+		IdleQuantity:     idleQuantity,
+		IdleRateByQuantity: idleRateByQuantity,
+		ExpiredCount:     expiredCount,
+		UrgentCount:      urgentCount,
+		CategoryStats:    categoryStats,
+		HouseStats:       houseStats,
+		RoomStats:        roomStats,
 	}
 
 	utils.Success(c, stats)

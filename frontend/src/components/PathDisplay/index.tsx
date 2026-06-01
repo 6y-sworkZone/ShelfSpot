@@ -1,6 +1,13 @@
 import { useState } from 'react'
-import { Tag, Popover } from 'antd'
-import { HomeOutlined, ApartmentOutlined, InboxOutlined, RightOutlined } from '@ant-design/icons'
+import { Tag, Popover, Button } from 'antd'
+import {
+  HomeOutlined,
+  ApartmentOutlined,
+  InboxOutlined,
+  RightOutlined,
+  ArrowRightOutlined,
+} from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import type { Item } from '@/types'
 
 interface PathDisplayProps {
@@ -9,6 +16,7 @@ interface PathDisplayProps {
 }
 
 const PathDisplay = ({ item, onContainerClick }: PathDisplayProps) => {
+  const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
 
   if (!item.container) {
@@ -33,6 +41,7 @@ const PathDisplay = ({ item, onContainerClick }: PathDisplayProps) => {
       name: house.name,
       icon: <HomeOutlined />,
       color: 'blue',
+      id: house.id,
     })
   }
   if (room) {
@@ -41,6 +50,7 @@ const PathDisplay = ({ item, onContainerClick }: PathDisplayProps) => {
       name: room.name,
       icon: <ApartmentOutlined />,
       color: 'cyan',
+      id: room.id,
     })
   }
   if (container) {
@@ -53,11 +63,8 @@ const PathDisplay = ({ item, onContainerClick }: PathDisplayProps) => {
     })
   }
 
-  const handleClick = (part: Part) => {
-    if (part.type === 'container' && part.id && onContainerClick) {
-      onContainerClick(part.id)
-    }
-    setExpanded(!expanded)
+  const handleNavigateToSpace = (part: Part) => {
+    navigate(`/space?type=${part.type}&id=${part.id}`)
   }
 
   const renderPath = () => {
@@ -71,10 +78,10 @@ const PathDisplay = ({ item, onContainerClick }: PathDisplayProps) => {
                 icon={part.icon}
                 color={part.color}
                 style={{
-                  cursor: part.type === 'container' && onContainerClick ? 'pointer' : 'default',
+                  cursor: 'pointer',
                   margin: 0,
                 }}
-                onClick={() => handleClick(part)}
+                onClick={() => handleNavigateToSpace(part)}
               >
                 {part.name}
               </Tag>
@@ -101,20 +108,23 @@ const PathDisplay = ({ item, onContainerClick }: PathDisplayProps) => {
   return (
     <Popover
       content={
-        <div>
+        <div style={{ minWidth: 200 }}>
+          <div style={{ marginBottom: 8, fontWeight: 500, color: '#666', fontSize: 12 }}>
+            点击跳转查看对应层级物品
+          </div>
           {parts.map((part, index) => (
             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: index < parts.length - 1 ? 4 : 0 }}>
               {part.icon}
               <span>{part.name}</span>
-              {part.type === 'container' && onContainerClick && (
-                <Tag
-                  color="geekblue"
-                  style={{ marginLeft: 'auto', cursor: 'pointer' }}
-                  onClick={() => handleClick(part)}
-                >
-                  查看物品
-                </Tag>
-              )}
+              <Button
+                type="link"
+                size="small"
+                style={{ marginLeft: 'auto', padding: 0 }}
+                icon={<ArrowRightOutlined />}
+                onClick={() => handleNavigateToSpace(part)}
+              >
+                跳转
+              </Button>
             </div>
           ))}
         </div>

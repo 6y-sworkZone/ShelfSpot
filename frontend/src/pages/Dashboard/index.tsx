@@ -204,13 +204,31 @@ const Dashboard = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="闲置率"
+              title="闲置率(按条目)"
               value={stats?.idle_rate || 0}
               suffix="%"
               precision={1}
               prefix={<ClockCircleOutlined />}
               valueStyle={{ color: '#fa8c16' }}
             />
+            <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+              共 {stats?.idle_count || 0} 件 / {stats?.total_items || 0} 件
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="闲置率(按数量)"
+              value={stats?.idle_rate_by_quantity || 0}
+              suffix="%"
+              precision={1}
+              prefix={<InboxOutlined />}
+              valueStyle={{ color: '#722ed1' }}
+            />
+            <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+              共 {stats?.idle_quantity || 0} 个 / {stats?.total_quantity || 0} 个
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -292,7 +310,24 @@ const Dashboard = () => {
           rowKey="id"
           loading={loading}
           pagination={false}
+          rowClassName={(record) => {
+            if (record.days_remaining < 0 && !record.is_handled) {
+              return 'expired-row'
+            }
+            if (record.days_remaining >= 0 && record.days_remaining <= 7 && !record.is_handled) {
+              return 'urgent-row'
+            }
+            return ''
+          }}
         />
+        <style>{`
+          .expired-row td {
+            background-color: #fff1f0 !important;
+          }
+          .urgent-row td {
+            background-color: #fffbe6 !important;
+          }
+        `}</style>
       </Card>
     </div>
   )
