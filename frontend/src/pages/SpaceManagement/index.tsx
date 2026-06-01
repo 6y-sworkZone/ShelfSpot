@@ -137,9 +137,7 @@ const SpaceManagement = () => {
     })
   }
 
-  const handleContainerClick = (_containerId: string) => {
-    navigate('/space')
-  }
+
 
   const columns = [
     {
@@ -163,7 +161,7 @@ const SpaceManagement = () => {
     {
       title: '位置路径',
       key: 'path',
-      render: (_: unknown, record: Item) => <PathDisplay item={record} onContainerClick={handleContainerClick} />,
+      render: (_: unknown, record: Item) => <PathDisplay item={record} />,
     },
     {
       title: '购入日期',

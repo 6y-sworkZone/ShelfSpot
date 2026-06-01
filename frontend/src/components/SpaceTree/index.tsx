@@ -101,6 +101,12 @@ const SpaceTree = ({ onSelect, showCheckbox = false, onCheck }: SpaceTreeProps) 
             justifyContent: 'space-between',
             width: '100%',
           }}
+          onClick={(e) => {
+            const target = e.target as HTMLElement
+            if (target.closest('.ant-dropdown-trigger') || target.closest('.space-tree-action-btn')) {
+              e.stopPropagation()
+            }
+          }}
         >
           <span
             onContextMenu={(e) => {
@@ -121,7 +127,12 @@ const SpaceTree = ({ onSelect, showCheckbox = false, onCheck }: SpaceTreeProps) 
               type="text"
               size="small"
               icon={<MoreOutlined />}
+              className="space-tree-action-btn"
               onClick={(e) => {
+                e.stopPropagation()
+                e.preventDefault()
+              }}
+              onMouseDown={(e) => {
                 e.stopPropagation()
               }}
               style={{ padding: '0 4px' }}

@@ -64,7 +64,11 @@ const PathDisplay = ({ item, onContainerClick }: PathDisplayProps) => {
   }
 
   const handleNavigateToSpace = (part: Part) => {
-    navigate(`/space?type=${part.type}&id=${part.id}`)
+    if (part.type === 'container' && part.id && onContainerClick) {
+      onContainerClick(part.id)
+    } else {
+      navigate(`/space?type=${part.type}&id=${part.id}`)
+    }
   }
 
   const renderPath = () => {

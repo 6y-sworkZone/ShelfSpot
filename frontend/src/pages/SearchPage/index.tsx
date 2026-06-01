@@ -12,14 +12,12 @@ import {
   message,
 } from 'antd'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
 import CategoryTree from '@/components/CategoryTree'
 import ItemCard from '@/components/ItemCard'
 import { searchItems, toggleItemIdle } from '@/api'
 import type { Item } from '@/types'
 
 const SearchPage = () => {
-  const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [items, setItems] = useState<Item[]>([])
@@ -78,10 +76,6 @@ const SearchPage = () => {
     }
   }
 
-  const handleContainerClick = (_containerId: string) => {
-    navigate('/space')
-  }
-
   return (
     <div style={{ display: 'flex', gap: 16, height: '100%' }}>
       <Card
@@ -127,7 +121,6 @@ const SearchPage = () => {
                     item={item}
                     showIdleButton
                     onToggleIdle={handleToggleIdle}
-                    onContainerClick={handleContainerClick}
                   />
                 </Col>
               ))}

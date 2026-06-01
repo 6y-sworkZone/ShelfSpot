@@ -17,7 +17,6 @@ import {
   ReloadOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
 import CategoryTree from '@/components/CategoryTree'
 import PathDisplay from '@/components/PathDisplay'
 import { getIdleItems, toggleItemIdle } from '@/api'
@@ -25,7 +24,6 @@ import type { Item } from '@/types'
 import { formatDate } from '@/utils/common'
 
 const IdleItems = () => {
-  const navigate = useNavigate()
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
@@ -69,10 +67,6 @@ const IdleItems = () => {
     })
   }
 
-  const handleContainerClick = (_containerId: string) => {
-    navigate('/space')
-  }
-
   const columns = [
     {
       title: '物品名称',
@@ -96,7 +90,7 @@ const IdleItems = () => {
       title: '位置路径',
       key: 'path',
       render: (_: unknown, record: Item) => (
-        <PathDisplay item={record} onContainerClick={handleContainerClick} />
+        <PathDisplay item={record} />
       ),
     },
     {
